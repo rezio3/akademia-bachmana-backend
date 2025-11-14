@@ -9,21 +9,44 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string)?.trim() || "";
 
-    const query = search
-      ? {
-          $or: [
-            { name: { $regex: search, $options: "i" } },
-            { phone: { $regex: search, $options: "i" } },
-            { email: { $regex: search, $options: "i" } },
-            { invoiceEmail: { $regex: search, $options: "i" } },
-            { address: { $regex: search, $options: "i" } },
-            { contactPerson: { $regex: search, $options: "i" } },
-            { nip: { $regex: search, $options: "i" } },
-            { regon: { $regex: search, $options: "i" } },
-            { description: { $regex: search, $options: "i" } },
-          ],
-        }
-      : {};
+    const locationNameToId: Record<number, string> = {
+      1: "lubuskie",
+      2: "mazowieckie",
+      3: "łódzkie",
+      4: "kujawsko-pomorskie",
+    };
+
+    const searchLower = search.toLowerCase();
+    let locationIdMatch: number | undefined;
+
+    for (const [id, name] of Object.entries(locationNameToId)) {
+      if (name.toLowerCase().includes(searchLower)) {
+        locationIdMatch = Number(id);
+        break;
+      }
+    }
+
+    const searchableFields = [
+      "name",
+      "phone",
+      "email",
+      "invoiceEmail",
+      "address",
+      "contactPerson",
+      "nip",
+      "regon",
+      "description",
+    ];
+
+    let orConditions = searchableFields.map((field) => ({
+      [field]: { $regex: search, $options: "i" },
+    }));
+
+    if (locationIdMatch) {
+      orConditions.push({ locationTypeId: locationIdMatch } as any);
+    }
+
+    const query = search ? { $or: orConditions } : {};
 
     const allDocs = await Place.find(query).lean<IPlace[]>();
     const reversed = allDocs.reverse();
