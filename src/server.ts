@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import mongoose from "mongoose";
-import placowkiRoutes from "./routes/placowki.js";
+import placesRoutes from "./routes/places.js";
 import personsRoutes from "./routes/persons.js";
 
 dotenv.config();
@@ -15,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/places", placowkiRoutes);
+app.use("/api/places", placesRoutes);
 app.use("/api/persons", personsRoutes);
 
 const mongoUri = process.env.MONGO_URI;

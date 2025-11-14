@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IPlacowka extends Document {
+export interface IPlace extends Document {
   name: string;
   phone: string;
   email: string;
@@ -13,7 +13,7 @@ export interface IPlacowka extends Document {
   description: string;
 }
 
-const PlacowkaSchema = new Schema<IPlacowka>(
+const PlaceSchema = new Schema<IPlace>(
   {
     name: { type: String, required: true },
     phone: { type: String },
@@ -29,8 +29,4 @@ const PlacowkaSchema = new Schema<IPlacowka>(
   { timestamps: false, versionKey: false }
 );
 
-export const Placowka = mongoose.model<IPlacowka>(
-  "Placowka",
-  PlacowkaSchema,
-  "placowki"
-);
+export const Place = mongoose.model<IPlace>("Place", PlaceSchema, "placowki");

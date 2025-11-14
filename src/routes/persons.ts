@@ -35,7 +35,7 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak wymaganych pól" });
     }
 
-    const newPlacowka = new Person({
+    const newPlace = new Person({
       name,
       personType,
       phone,
@@ -44,7 +44,7 @@ router.post("/", async (req: Request, res: Response) => {
       description,
     });
 
-    const saved = await newPlacowka.save();
+    const saved = await newPlace.save();
     res.status(201).json(saved);
   } catch (err) {
     console.error("Błąd dodawania placówki:", err);

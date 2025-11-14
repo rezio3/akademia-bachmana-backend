@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { Placowka, IPlacowka } from "../models/Placowka.js";
+import { Place, IPlace } from "../models/Place.js";
 
 const router = Router();
 
@@ -9,10 +9,23 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string)?.trim() || "";
 
-    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+    const query = search
+      ? {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { phone: { $regex: search, $options: "i" } },
+            { email: { $regex: search, $options: "i" } },
+            { invoiceEmail: { $regex: search, $options: "i" } },
+            { address: { $regex: search, $options: "i" } },
+            { contactPerson: { $regex: search, $options: "i" } },
+            { nip: { $regex: search, $options: "i" } },
+            { regon: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
-    const allDocs = await Placowka.find(query).lean<IPlacowka[]>();
-
+    const allDocs = await Place.find(query).lean<IPlace[]>();
     const reversed = allDocs.reverse();
 
     const totalCount = reversed.length;
@@ -20,7 +33,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const paginated = reversed.slice((page - 1) * limit, page * limit);
 
-    res.json({ placowki: paginated, totalPages });
+    res.json({ places: paginated, totalPages });
   } catch (error) {
     console.error("Błąd pobierania placówek:", error);
     res.status(500).json({ message: "Błąd serwera" });
@@ -46,7 +59,7 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak wymaganych pól" });
     }
 
-    const newPlacowka = new Placowka({
+    const newPlace = new Place({
       name,
       phone,
       email,
@@ -59,7 +72,7 @@ router.post("/", async (req: Request, res: Response) => {
       description,
     });
 
-    const saved = await newPlacowka.save();
+    const saved = await newPlace.save();
     res.status(201).json(saved);
   } catch (err) {
     console.error("Błąd dodawania placówki:", err);
@@ -88,7 +101,7 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak wymaganych pól" });
     }
 
-    const updatedPlacowka = await Placowka.findByIdAndUpdate(
+    const updatedPlace = await Place.findByIdAndUpdate(
       id,
       {
         name,
@@ -105,11 +118,11 @@ router.put("/:id", async (req: Request, res: Response) => {
       { new: true }
     );
 
-    if (!updatedPlacowka) {
+    if (!updatedPlace) {
       return res.status(404).json({ message: "Placówka nie znaleziona" });
     }
 
-    res.status(200).json(updatedPlacowka);
+    res.status(200).json(updatedPlace);
   } catch (err) {
     console.error("Błąd podczas edycji placówki:", err);
     res.status(500).json({ message: "Błąd serwera" });
@@ -124,7 +137,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak ID placówki" });
     }
 
-    const deleted = await Placowka.findByIdAndDelete(id);
+    const deleted = await Place.findByIdAndDelete(id);
 
     if (!deleted) {
       return res.status(404).json({ message: "Placówka nie istnieje" });
