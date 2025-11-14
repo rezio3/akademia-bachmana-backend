@@ -9,7 +9,54 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string)?.trim() || "";
 
-    const query = search ? { name: { $regex: search, $options: "i" } } : {};
+    const searchLower = search.toLowerCase();
+
+    const locationNameToId: Record<number, string> = {
+      1: "lubuskie",
+      2: "mazowieckie",
+      3: "łódzkie",
+      4: "kujawsko-pomorskie",
+    };
+
+    let locationMatchId: number | undefined;
+
+    for (const [id, name] of Object.entries(locationNameToId)) {
+      if (name.toLowerCase().includes(searchLower)) {
+        locationMatchId = Number(id);
+        break;
+      }
+    }
+
+    const personTypeMap: Record<number, string> = {
+      1: "prowadzący",
+      2: "zastępca",
+      3: "muzyk",
+    };
+
+    let personTypeMatchId: number | undefined;
+
+    for (const [id, name] of Object.entries(personTypeMap)) {
+      if (name.toLowerCase().includes(searchLower)) {
+        personTypeMatchId = Number(id);
+        break;
+      }
+    }
+
+    const searchableFields = ["name", "phone", "email", "description"];
+
+    let orConditions = searchableFields.map((field) => ({
+      [field]: { $regex: search, $options: "i" },
+    }));
+
+    if (locationMatchId) {
+      orConditions.push({ location: locationMatchId } as any);
+    }
+
+    if (personTypeMatchId) {
+      orConditions.push({ personType: personTypeMatchId } as any);
+    }
+
+    const query = search ? { $or: orConditions } : {};
 
     const allDocs = await Person.find(query).lean<IPerson[]>();
 

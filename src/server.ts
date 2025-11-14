@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.js";
 import mongoose from "mongoose";
 import placesRoutes from "./routes/places.js";
 import personsRoutes from "./routes/persons.js";
+import audycjeRoutes from "./routes/audycje.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/places", placesRoutes);
 app.use("/api/persons", personsRoutes);
+app.use("/api/audycje", audycjeRoutes);
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
