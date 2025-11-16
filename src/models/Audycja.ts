@@ -33,6 +33,7 @@ const AudycjaSchema = new Schema<IAudycja>(
         name: { type: String },
         _id: { type: String },
       },
+      required: false,
     },
 
     musician: {

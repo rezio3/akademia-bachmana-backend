@@ -5,8 +5,11 @@ const router = Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const pageParam = req.query.page as string;
+    const limitParam = req.query.limit as string;
+
+    const page = pageParam ? parseInt(pageParam) : undefined;
+    const limit = limitParam ? parseInt(limitParam) : undefined;
     const search = (req.query.search as string)?.trim() || "";
 
     const locationNameToId: Record<number, string> = {
@@ -51,12 +54,15 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const allDocs = await Place.find(query).lean<IPlace[]>();
     const reversed = allDocs.reverse();
 
-    const totalCount = reversed.length;
-    const totalPages = Math.ceil(totalCount / limit);
+    if (page !== undefined && limit !== undefined) {
+      const totalCount = reversed.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      const paginated = reversed.slice((page - 1) * limit, page * limit);
 
-    const paginated = reversed.slice((page - 1) * limit, page * limit);
-
-    res.json({ places: paginated, totalPages });
+      res.json({ places: paginated, totalPages });
+    } else {
+      res.json({ places: reversed });
+    }
   } catch (error) {
     console.error("Błąd pobierania placówek:", error);
     res.status(500).json({ message: "Błąd serwera" });
