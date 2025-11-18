@@ -30,9 +30,9 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const audycje = await Audycja.find(filter)
-      .populate("place") // wypełni pełne dane placówki
-      .populate("leader") // jeśli to też ObjectId
-      .populate("musician") // jeśli to też ObjectId
+      .populate("place")
+      .populate("leader")
+      .populate("musician")
       .lean();
     const reversed = audycje.reverse();
 
@@ -105,6 +105,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     });
 
     const savedAudycja = await newAudycja.save();
+    console.log(savedAudycja);
 
     res.status(201).json({
       message: "Audycja została dodana pomyślnie",
@@ -112,6 +113,112 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     console.error("Błąd podczas dodawania audycji:", error);
+    res.status(500).json({ message: "Błąd serwera" });
+  }
+});
+
+router.put("/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const {
+      placeId,
+      locationId,
+      startDate,
+      endDate,
+      leaderId,
+      musicianId,
+      status,
+      price,
+      paymentMethod,
+      description,
+    } = req.body;
+
+    // Sprawdź czy audycja istnieje
+    const existingAudycja = await Audycja.findById(id);
+    if (!existingAudycja) {
+      res.status(404).json({ message: "Audycja nie została znaleziona" });
+      return;
+    }
+
+    // Walidacja wymaganych pól
+    if (!placeId) {
+      res.status(400).json({ message: "Pole 'placeId' jest wymagane" });
+      return;
+    }
+
+    const place = await Place.findById(placeId);
+    if (!place) {
+      res.status(404).json({ message: "Placówka nie została znaleziona" });
+      return;
+    }
+
+    if (!locationId) {
+      res.status(400).json({ message: "Pole 'locationId' jest wymagane" });
+      return;
+    }
+
+    if (!startDate) {
+      res.status(400).json({ message: "Pole 'startDate' jest wymagane" });
+      return;
+    }
+
+    if (!endDate) {
+      res.status(400).json({ message: "Pole 'endDate' jest wymagane" });
+      return;
+    }
+
+    if (status === undefined || status === null) {
+      res.status(400).json({ message: "Pole 'status' jest wymagane" });
+      return;
+    }
+
+    const updatedAudycja = await Audycja.findByIdAndUpdate(
+      id,
+      {
+        place: placeId,
+        locationId,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        leader: leaderId || undefined,
+        musician: musicianId || undefined,
+        status,
+        price: price || undefined,
+        paymentMethod: paymentMethod || undefined,
+        description: description || undefined,
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("place")
+      .populate("leader")
+      .populate("musician");
+
+    res.status(200).json({
+      message: "Audycja została zaktualizowana pomyślnie",
+      audycja: updatedAudycja,
+    });
+  } catch (error) {
+    console.error("Błąd podczas aktualizacji audycji:", error);
+    res.status(500).json({ message: "Błąd serwera" });
+  }
+});
+
+router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const deletedAudycja = await Audycja.findByIdAndDelete(id);
+
+    if (!deletedAudycja) {
+      res.status(404).json({ message: "Audycja nie została znaleziona" });
+      return;
+    }
+
+    res.status(200).json({
+      message: "Audycja została usunięta pomyślnie",
+      audycja: deletedAudycja,
+    });
+  } catch (error) {
+    console.error("Błąd podczas usuwania audycji:", error);
     res.status(500).json({ message: "Błąd serwera" });
   }
 });
