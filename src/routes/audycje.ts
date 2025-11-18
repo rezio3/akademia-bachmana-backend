@@ -1,25 +1,43 @@
 import express, { Request, Response } from "express";
 import { Audycja } from "../models/Audycja.js";
+import { Place } from "../models/Place.js";
 
 const router = express.Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const locationId = req.query.location
+      ? parseInt(req.query.location as string)
+      : null;
 
-    const allDocs = await Audycja.find().lean();
+    const month = req.query.month ? parseInt(req.query.month as string) : null;
+    const year = req.query.year ? parseInt(req.query.year as string) : null;
+    const filter: any = {};
+    if (locationId !== null) {
+      filter.locationId = locationId;
+    }
 
-    const reversed = allDocs.reverse();
+    if (month !== null || year !== null) {
+      filter.$expr = { $and: [] };
 
-    const totalCount = reversed.length;
-    const totalPages = Math.ceil(totalCount / limit);
+      if (month !== null) {
+        filter.$expr.$and.push({ $eq: [{ $month: "$startDate" }, month] });
+      }
 
-    const paginated = reversed.slice((page - 1) * limit, page * limit);
+      if (year !== null) {
+        filter.$expr.$and.push({ $eq: [{ $year: "$startDate" }, year] });
+      }
+    }
+
+    const audycje = await Audycja.find(filter)
+      .populate("place") // wypełni pełne dane placówki
+      .populate("leader") // jeśli to też ObjectId
+      .populate("musician") // jeśli to też ObjectId
+      .lean();
+    const reversed = audycje.reverse();
 
     res.json({
-      audycje: paginated,
-      totalPages,
+      audycje: reversed,
     });
   } catch (error) {
     console.error("Błąd pobierania audycji:", error);
@@ -30,22 +48,26 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      place,
+      placeId,
       locationId,
       startDate,
       endDate,
-      leader,
-      musician,
+      leaderId,
+      musicianId,
       status,
       price,
       paymentMethod,
       description,
     } = req.body;
 
-    if (!place || !place.name || !place._id) {
-      res
-        .status(400)
-        .json({ message: "Pole 'place' (name i _id) jest wymagane" });
+    if (!placeId) {
+      res.status(400).json({ message: "Pole 'placeId' jest wymagane" });
+      return;
+    }
+
+    const place = await Place.findById(placeId);
+    if (!place) {
+      res.status(404).json({ message: "Placówka nie została znaleziona" });
       return;
     }
 
@@ -70,12 +92,12 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const newAudycja = new Audycja({
-      place,
+      place: placeId,
       locationId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
-      leader: leader || undefined,
-      musician: musician || undefined,
+      leader: leaderId || undefined,
+      musician: musicianId || undefined,
       status,
       price: price || undefined,
       paymentMethod: paymentMethod || undefined,
