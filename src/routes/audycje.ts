@@ -223,4 +223,39 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+router.patch("/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { isPaid } = req.body;
+
+    const existingAudycja = await Audycja.findById(id);
+    if (!existingAudycja) {
+      res.status(404).json({ message: "Audycja nie została znaleziona" });
+      return;
+    }
+
+    if (typeof isPaid !== "boolean") {
+      res.status(400).json({ message: "Pole 'isPaid' musi być typu boolean" });
+      return;
+    }
+
+    const updatedAudycja = await Audycja.findByIdAndUpdate(
+      id,
+      { isPaid },
+      { new: true, runValidators: true }
+    )
+      .populate("place")
+      .populate("leader")
+      .populate("musician");
+
+    res.status(200).json({
+      message: "Status płatności został zaktualizowany pomyślnie",
+      audycja: updatedAudycja,
+    });
+  } catch (error) {
+    console.error("Błąd podczas aktualizacji statusu płatności:", error);
+    res.status(500).json({ message: "Błąd serwera" });
+  }
+});
+
 export default router;

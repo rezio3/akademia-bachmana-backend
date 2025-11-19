@@ -11,6 +11,7 @@ export interface IAudycja extends Document {
   price?: number;
   paymentMethod?: string;
   description?: string;
+  isPaid: boolean;
 }
 
 const AudycjaSchema = new Schema<IAudycja>(
@@ -35,6 +36,7 @@ const AudycjaSchema = new Schema<IAudycja>(
     price: { type: Number },
     paymentMethod: { type: String },
     description: { type: String },
+    isPaid: { type: Boolean, required: true },
   },
   { timestamps: false, versionKey: false }
 );
