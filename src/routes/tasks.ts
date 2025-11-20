@@ -7,7 +7,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const allTasks = await Task.find().lean<ITask[]>();
 
-    res.json({ tasks: allTasks });
+    res.json({ tasks: allTasks.reverse() });
   } catch (error) {
     console.error("Błąd pobierania listy zadań.", error);
     res.status(500).json({ message: "Błąd serwera" });
@@ -84,6 +84,26 @@ router.delete("/:id", async (req: Request, res: Response) => {
     res.status(200).json({ message: "Zadanie usunięte" });
   } catch (err) {
     console.error("Błąd usuwania zadania:", err);
+    res.status(500).json({ message: "Błąd serwera" });
+  }
+});
+
+router.patch("/:id/toggle", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const task = await Task.findById(id);
+
+    if (!task) {
+      return res.status(404).json({ message: "Zadanie nie znalezione" });
+    }
+
+    task.completed = !task.completed;
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (err) {
+    console.error("Błąd podczas zmiany statusu zadania:", err);
     res.status(500).json({ message: "Błąd serwera" });
   }
 });

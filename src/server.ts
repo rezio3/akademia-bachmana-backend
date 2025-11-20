@@ -9,6 +9,7 @@ import leadersRoutes from "./routes/leaders.js";
 import musiciansRoutes from "./routes/musicians.js";
 import audycjeRoutes from "./routes/audycje.js";
 import tasksRoutes from "./routes/tasks.js";
+import currentAudycjeRoutes from "./routes/dashboard.js";
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use("/api/leaders", leadersRoutes);
 app.use("/api/musicians", musiciansRoutes);
 app.use("/api/audycje", audycjeRoutes);
 app.use("/api/tasks", tasksRoutes);
+app.use("/api/dashboard", currentAudycjeRoutes);
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {

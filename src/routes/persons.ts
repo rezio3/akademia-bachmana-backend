@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { Person, IPerson } from "../models/Person.js";
+import { Audycja } from "../models/Audycja.js";
 
 const router = Router();
 
@@ -141,11 +142,22 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak ID osoby" });
     }
 
-    const deleted = await Person.findByIdAndDelete(id);
-
-    if (!deleted) {
+    const person = await Person.findById(id);
+    if (!person) {
       return res.status(404).json({ message: "Osoba nie istnieje" });
     }
+
+    const audycjeWithPerson = await Audycja.findOne({
+      $or: [{ leader: id }, { musician: id }],
+    });
+
+    if (audycjeWithPerson) {
+      return res.status(400).json({
+        message: "Nie można usunąć osoby, ponieważ ma przypisane audycje.",
+      });
+    }
+
+    await Person.findByIdAndDelete(id);
 
     res.status(200).json({ message: "Osoba usunięta" });
   } catch (err) {

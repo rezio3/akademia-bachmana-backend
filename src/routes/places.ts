@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { Place, IPlace } from "../models/Place.js";
+import { Audycja } from "../models/Audycja.js";
 
 const router = Router();
 
@@ -166,11 +167,20 @@ router.delete("/:id", async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Brak ID placówki" });
     }
 
-    const deleted = await Place.findByIdAndDelete(id);
-
-    if (!deleted) {
+    const place = await Place.findById(id);
+    if (!place) {
       return res.status(404).json({ message: "Placówka nie istnieje" });
     }
+
+    const audycjeWithPlace = await Audycja.findOne({ place: id });
+
+    if (audycjeWithPlace) {
+      return res.status(400).json({
+        message: "Nie można usunąć placówki, ponieważ ma przypisane audycje.",
+      });
+    }
+
+    await Place.findByIdAndDelete(id);
 
     res.status(200).json({ message: "Placówka usunięta" });
   } catch (err) {
