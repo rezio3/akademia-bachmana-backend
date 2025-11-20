@@ -102,6 +102,7 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
       price: price || undefined,
       paymentMethod: paymentMethod || undefined,
       description: description || undefined,
+      isPaid: false,
     });
 
     const savedAudycja = await newAudycja.save();
